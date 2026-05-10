@@ -1,0 +1,37 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// WiFi credentials — copy this file to config.h and fill these in
+const char* WIFI_SSID     = "your-wifi-ssid";
+const char* WIFI_PASSWORD = "your-wifi-password";
+
+// TfL REST API base URL
+const char* TFL_API_BASE = "https://api.tfl.gov.uk/StopPoint/";
+
+// LCD (16x2 I2C)
+const byte LCD_ADDR = 0x27;
+const byte LCD_COLS = 16;
+const byte LCD_ROWS = 2;
+
+// EEPROM layout:
+//   0  .. (MAX_STOPS * STOP_ID_LENGTH - 1)    : stop IDs
+//   EEPROM_LABELS_OFFSET .. +MAX_STOPS*STOP_LABEL_LENGTH : stop labels
+const int EEPROM_SIZE          = 512;
+const int MAX_STOPS            = 5;
+const int STOP_ID_LENGTH       = 20;
+const int STOP_LABEL_LENGTH    = 12;
+const int EEPROM_LABELS_OFFSET = MAX_STOPS * STOP_ID_LENGTH; // 100
+
+// Timeouts
+const unsigned long WIFI_TIMEOUT    = 10000; // ms
+const unsigned long UPDATE_INTERVAL = 30000; // ms between API fetches
+const unsigned long CYCLE_INTERVAL  = 15000; // ms between stop rotations
+const unsigned long SCROLL_INTERVAL =  4000; // ms between arrival scroll on LCD
+
+// Web server
+const int WEB_SERVER_PORT = 80;
+
+// JSON response buffer
+const size_t JSON_DOC_SIZE = 4096;
+
+#endif // CONFIG_H

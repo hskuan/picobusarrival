@@ -9,6 +9,7 @@ A Raspberry Pi Pico W project that displays real-time London bus, DLR, Overgroun
 - Cycles through up to 5 configured stops
 - Scrolls between the next two arrivals on the LCD
 - Web UI (served from the Pico W) to set stop IDs and display labels — no reflashing needed
+- Backlight on/off toggle via web UI
 - Configuration persisted to EEPROM
 
 ## LCD layout
@@ -69,7 +70,10 @@ pio run --target upload
 
 1. On first boot the LCD shows the Pico W's IP address
 2. Open that address in a browser
-3. Enter TfL stop IDs and optional display labels, then click **Save & Apply**
+3. Configure your stops:
+   - Enter TfL stop IDs and optional display labels
+   - Use the **Backlight** toggle to turn the display backlight on/off (persists across reboots)
+   - Click **Save & Apply** to save stop configuration
 
 ![Web UI](docs/webui.png)
 

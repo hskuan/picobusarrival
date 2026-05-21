@@ -29,6 +29,7 @@ unsigned long lastCycleTime  = 0;
 unsigned long lastScrollTime = 0;
 int scrollIdx = 0;
 std::vector<Arrival> currentArrivals;
+bool backlightEnabled = true;
 
 // Forward declarations
 void connectToWiFi();
@@ -41,6 +42,7 @@ String urlDecode(const String& input);
 void parsePostData(const String& data);
 void loadFromEEPROM();
 void saveToEEPROM();
+void toggleBacklight();
 void handleWebServer();
 String generateHtmlPage(bool saved);
 
@@ -54,7 +56,11 @@ void setup() {
   loadFromEEPROM();
 
   lcd.init();
-  lcd.backlight();
+  if (backlightEnabled) {
+    lcd.backlight();
+  } else {
+    lcd.noBacklight();
+  }
   lcd.setCursor(0, 0);
   lcd.print("Initializing...");
 
@@ -303,7 +309,8 @@ void loadFromEEPROM() {
       stopLabels[i] += c;
     }
   }
-  // No default stop — configure via the web UI
+  byte backlightByte = EEPROM.read(EEPROM_BACKLIGHT_OFFSET);
+  backlightEnabled = (backlightByte != 0);
 }
 
 void saveToEEPROM() {
@@ -317,12 +324,19 @@ void saveToEEPROM() {
       EEPROM.write(labelBase + j,
         j < (int)stopLabels[i].length() ? stopLabels[i][j] : '\0');
   }
+  EEPROM.write(EEPROM_BACKLIGHT_OFFSET, backlightEnabled ? 1 : 0);
   EEPROM.commit();
 }
 
-// ---------------------------------------------------------------------------
-// Web server
-// ---------------------------------------------------------------------------
+void toggleBacklight() {
+  backlightEnabled = !backlightEnabled;
+  if (backlightEnabled) {
+    lcd.backlight();
+  } else {
+    lcd.noBacklight();
+  }
+  saveToEEPROM();
+}
 
 String urlDecode(const String& input) {
   String out;
@@ -420,6 +434,12 @@ void handleWebServer() {
     client.println("Location: /?saved=1");
     client.println("Connection: close");
     client.println();
+  } else if (requestLine.indexOf("/backlight/toggle") != -1) {
+    toggleBacklight();
+    client.println("HTTP/1.1 303 See Other");
+    client.println("Location: /");
+    client.println("Connection: close");
+    client.println();
   } else {
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/html; charset=UTF-8");
@@ -444,6 +464,10 @@ String generateHtmlPage(bool saved) {
        "h1{color:#c00;margin-bottom:4px}"
        ".status{background:#f5f5f5;border-radius:6px;padding:8px 12px;margin-bottom:16px;font-size:.9em}"
        ".saved{background:#d4edda;color:#155724;border-radius:6px;padding:8px 12px;margin-bottom:16px}"
+       ".backlight-control{background:#fff3cd;border-radius:6px;padding:8px 12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}"
+       ".backlight-status{font-size:.95em}"
+       ".backlight-btn{padding:6px 16px;background:#ffc107;color:#333;border:none;border-radius:3px;cursor:pointer;font-size:.9em}"
+       ".backlight-btn:hover{background:#ffb300}"
        "table{width:100%;border-collapse:collapse;margin-top:4px}"
        "th{text-align:left;padding:6px 8px;background:#eee;font-size:.82em;white-space:nowrap}"
        "td{padding:4px 6px;vertical-align:middle}"
@@ -466,6 +490,13 @@ String generateHtmlPage(bool saved) {
   h += "</div>";
 
   if (saved) h += "<div class='saved'>&#10003; Configuration saved!</div>";
+
+  h += "<div class='backlight-control'>"
+       "<span class='backlight-status'>Backlight: <strong>";
+  h += backlightEnabled ? "ON" : "OFF";
+  h += "</strong></span>"
+       "<a href='/backlight/toggle' class='backlight-btn'>Toggle</a>"
+       "</div>";
 
   h += "<form action='/config' method='POST'>"
        "<table>"
